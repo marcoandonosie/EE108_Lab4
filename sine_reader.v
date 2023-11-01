@@ -7,85 +7,54 @@ module sine_reader(
     output sample_ready,
     output wire [15:0] sample
 );
-    wire [19:0] cur_addr;
-    reg [19:0] next_addr; 
+    wire [21:0] cur_addr; // {address, presicision, quadrant}
+    reg [21:0] next_addr; 
     wire [15:0] sample_out; // reg to go into sine_rom
-    reg [19:0] next_value; // used to calculate next_addr within case statement
-    reg [9:0] END_OF_ROM = 10'd1023;
-    reg [9:0] ROM_BEGINNING = 10'd0;
-    reg [1:0] QUAD;
+    reg signed [19:0] next_value; // used to calculate next_addr within case statement
+    reg [19:0] END_OF_ROM = {10'd1023, 10'd0};
+    reg [19:0] ROM_BEGINNING = 20'd0;
+    
     
 
     
     // initialize DFF 
-    dffr #(.WIDTH(22)) counter (.clk(clk), .r(reset), .d({next_addr, QUAD}), .q({cur_addr, QUAD}));
+    dffr #(.WIDTH(22)) counter (.clk(clk), .r(reset), .d(next_addr), .q(cur_addr));
     
     // increment the current address: if we are in quadrants 00 or 10, increment your
     // address through the ROM, else, decrement your address through the ROM
     
     always @ (*) begin
-        case(QUAD)
-            2'b00: begin
-                next_value = cur_addr + step_size;
-                if (next_value[19:9] > END_OF_ROM) begin
-                    // go backwards from the end of the rom
-                    // and change to the second quadrant
-                    next_addr = END_OF_ROM - (next_value - END_OF_ROM);
-                    QUAD = 2'b01;
-                    end
-                else begin
-                    next_addr = next_value;
-                    end
+        if (cur_addr[1:0] == 2'b00 || cur_addr[1:0] == 2'b10) begin // quad 1 or 3: increment through ROM
+            next_value = cur_addr[21:2] + step_size;
+            if (next_value > END_OF_ROM) begin // handles case where we go past the end of the ROM
+                next_addr[21:2] = END_OF_ROM - (next_value - END_OF_ROM); 
+                next_addr[1:0] = (cur_addr[1:0] == 2'b00) ? 2'b01 : 2'b11;
+             end else begin // regular case of decrementing address thru rom
+                next_addr[21:2] = next_value;
+                next_addr[1:0] = cur_addr[1:0]; 
              end
-            2'b01: begin
-                next_value = cur_addr - step_size; // ARE THESE VALUES SIGNED OR UNSIGNED
-                if (next_value[19:9] < ROM_BEGINNING) begin
-                    // if next address is past rom beginning
-                    // change to third quadrant
-                    next_addr = 19'd0 - next_value;
-                    QUAD = 2'b10;
-                    end
-                 else begin
-                    next_addr = next_value;
-                    end
-            end
-            2'b10: begin
-               next_value = cur_addr + step_size;
-                if (next_value[19:9] > END_OF_ROM) begin
-                    // go backwards from the end of the rom
-                    // and change to the 4th quadrant
-                    next_addr = END_OF_ROM - (next_value - END_OF_ROM);
-                    QUAD = 2'b11;
-                    end
-                else begin
-                    next_addr = next_value;
-                    end
-             end
-             2'b11: begin
-             next_value = cur_addr - step_size; // ARE THESE VALUES SIGNED OR UNSIGNED
-                if (next_value[19:9] < ROM_BEGINNING) begin
-                    // if next address is past rom beginning
-                    // change to first quadrant
-                    next_addr = 0 - next_value;
-                    QUAD = 2'b00;
-                    end
-                 else begin
-                    next_addr = next_value;
-                    end
-             end
-             default: begin // INITIAL STATE
-             QUAD = 2'b00;
-             next_addr = ROM_BEGINNING + step_size;
-             end
-            endcase
-            end
-                    
+       end else 
+       if (cur_addr[1:0] == 2'b01 || cur_addr[1:0] == 2'b11) begin // quad 2  or 4: decrement through ROM
+            next_value = cur_addr[21:2] - step_size;
+            if (next_value < ROM_BEGINNING) begin // handles case where we go past the begining of ROM
+                next_addr[21:2] = ROM_BEGINNING - next_value;
+                next_addr[1:0] = (cur_addr[1:0] == 2'b01) ? 2'b10 : 2'b00;
+            end else begin // regular case of decrementing address thru rom
+                next_addr[21:2] = next_value;
+                next_addr[1:0] = cur_addr[1:0]; 
+                end
+       end else begin // INITIAL STATE
+            next_addr[21:2] = ROM_BEGINNING + step_size;
+            next_addr[1:0] = 2'b00;
+       end
+     end
+                                  
     // step through sine ROM, only taking first 10 bits of cur_addr as our address
-    sine_rom rom_instance (.clk(clk), .addr(next_addr[19:11]), .dout(sample_out));
+    sine_rom rom_instance (.clk(clk), .addr(cur_addr[21:2]), .dout(sample_out));
     
     // need to invert the output depending on the quadrant + we can only output a sample
     // when generate_next is high
-     assign sample = (QUAD == 2'b10 || QUAD == 2'b11) ? 
+     assign sample = (cur_addr[1:0] == 2'b10|| cur_addr[1:0] == 2'b11) ? 
                     15'd0 - sample_out : sample_out;
      
 
