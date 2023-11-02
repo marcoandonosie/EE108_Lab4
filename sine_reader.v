@@ -8,44 +8,25 @@ module sine_reader(
     output wire [15:0] sample
 );
     wire signed [21:0] cur_addr; // {quadrant. address, precision}
-    reg signed [21:0] next_addr; 
+    wire signed [21:0] next_addr; 
     wire signed [15:0] sample_out; // reg to go into sine_rom
     reg signed [21:0] next_value; // used to calculate next_addr within case statement
     
     // initialize DFF 
-    dffr #(.WIDTH(22)) counter (.clk(clk), .r(reset), .d(next_addr), .q(cur_addr));
+    dffre #(.WIDTH(22)) counter (.clk(clk), .r(reset), .d(next_addr), .q(cur_addr), .en(generate_next));
     
     // increment the current address: if we are in quadrants 00 or 10, increment your
     // address through the ROM, else, decrement your address through the ROM
     
-    always @ (*) begin
-        if (cur_addr[21:20] == 2'b00 || cur_addr[21:20] == 2'b10) begin 
-            // if we are in quadrants 0 and 2, increment the address through the rom
-            next_value = cur_addr + {2'b00, step_size};
-            if (next_value[21:20] == 2'b01 || next_value[21:20] == 2'b11) begin // overflow case
-                next_value[19:0] = 20'd0 - next_value[19:0]; // invert address.precision value, since we overflowed
-            end
-            next_addr = next_value;
-        end else 
-        if (cur_addr[21:20] == 2'b01 || cur_addr[21:20] == 2'b11) begin
-            // if we are in quadrants 1 and 3, dencrement the address through the rom
-            next_value = cur_addr - {2'b00, step_size};
-            if (next_value[21:20] == 2'b00 || next_value[21:20] == 2'b10) begin // overflow case
-                next_value[19:0] = 20'd0 - next_value[19:0]; // invert address.precision value
-            end
-            next_addr = next_value;
-        end else begin // initial case: default
-            next_addr = 22'b0 +  {2'b00, step_size};
-        end
-                 
-     end
-                                  
+    assign next_addr = cur_addr + {2'b00, step_size};
+    assign next_addr = (cur_addr[20]) ? 20'd0 - next_addr[19:10]: next_addr[19:10];
+                                 
     // step through sine ROM, only taking first 10 bits of cur_addr as our address
     sine_rom rom_instance (.clk(clk), .addr(cur_addr[19:10]), .dout(sample_out));
     
     // need to invert the output depending on the quadrant + we can only output a sample
     // when generate_next is high
-     assign sample = (cur_addr[21:20] == 2'b10|| cur_addr[21:20] == 2'b11) ? 
+     assign sample = (cur_addr[21]) ? 
                     -sample_out : sample_out;
      
 
@@ -54,6 +35,65 @@ module sine_reader(
   
 
 endmodule
+
+____________________
+// module sine_reader(
+//     input clk,
+//     input reset,
+//     input [19:0] step_size,
+//     input generate_next,
+
+//     output sample_ready,
+//     output wire [15:0] sample
+// );
+//     wire signed [21:0] cur_addr; // {quadrant. address, precision}
+//     reg signed [21:0] next_addr; 
+//     wire signed [15:0] sample_out; // reg to go into sine_rom
+//     reg signed [21:0] next_value; // used to calculate next_addr within case statement
+    
+//     // initialize DFF 
+//     dffr #(.WIDTH(22)) counter (.clk(clk), .r(reset), .d(next_addr), .q(cur_addr));
+    
+//     // increment the current address: if we are in quadrants 00 or 10, increment your
+//     // address through the ROM, else, decrement your address through the ROM
+    
+//     always @ (*) begin
+//         if (cur_addr[21:20] == 2'b00 || cur_addr[21:20] == 2'b10) begin 
+//             // if we are in quadrants 0 and 2, increment the address through the rom
+//             next_value = cur_addr + {2'b00, step_size};
+//             if (next_value[21:20] == 2'b01 || next_value[21:20] == 2'b11) begin // overflow case
+//                 next_value[19:0] = 20'd0 - next_value[19:0]; // invert address.precision value, since we overflowed
+//             end
+//             next_addr = next_value;
+//         end else 
+//         if (cur_addr[21:20] == 2'b01 || cur_addr[21:20] == 2'b11) begin
+//             // if we are in quadrants 1 and 3, dencrement the address through the rom
+//             next_value = cur_addr - {2'b00, step_size};
+//             if (next_value[21:20] == 2'b00 || next_value[21:20] == 2'b10) begin // overflow case
+//                 next_value[19:0] = 20'd0 - next_value[19:0]; // invert address.precision value
+//             end
+//             next_addr = next_value;
+//         end else begin // initial case: default
+//             next_addr = 22'b0 +  {2'b00, step_size};
+//         end
+                 
+//      end
+                                  
+//     // step through sine ROM, only taking first 10 bits of cur_addr as our address
+//     sine_rom rom_instance (.clk(clk), .addr(cur_addr[19:10]), .dout(sample_out));
+    
+//     // need to invert the output depending on the quadrant + we can only output a sample
+//     // when generate_next is high
+//      assign sample = (cur_addr[21:20] == 2'b10|| cur_addr[21:20] == 2'b11) ? 
+//                     -sample_out : sample_out;
+     
+
+//      assign sample_ready = (generate_next);
+     
+  
+
+// endmodule
+_____________
 
 
 // module sine_reader(
