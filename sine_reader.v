@@ -1,4 +1,3 @@
-
 module sine_reader(
     input clk,
     input reset,
@@ -8,9 +7,9 @@ module sine_reader(
     output sample_ready,
     output wire [15:0] sample
 );
-    wire [21:0] cur_addr; // {quadrant. address, precision}
-    reg [21:0] next_addr; 
-    wire [15:0] sample_out; // reg to go into sine_rom
+    wire signed [21:0] cur_addr; // {quadrant. address, precision}
+    reg signed [21:0] next_addr; 
+    wire signed [15:0] sample_out; // reg to go into sine_rom
     reg signed [21:0] next_value; // used to calculate next_addr within case statement
     
     // initialize DFF 
@@ -47,7 +46,7 @@ module sine_reader(
     // need to invert the output depending on the quadrant + we can only output a sample
     // when generate_next is high
      assign sample = (cur_addr[21:20] == 2'b10|| cur_addr[21:20] == 2'b11) ? 
-                    15'd0 - sample_out : sample_out;
+                    -sample_out : sample_out;
      
 
      assign sample_ready = (generate_next);
@@ -55,10 +54,6 @@ module sine_reader(
   
 
 endmodule
-
-
-
-
 
 
 // module sine_reader(
