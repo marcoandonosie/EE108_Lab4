@@ -18,10 +18,21 @@ module note_player(
     // call frequency rom to get step size
     frequency_rom rom_instance (.clk(clk), .addr(note_to_load), .dout(step_size)); // is note right address????? size wise
     
+    // need to add flip flop here
+    wire [19:0] out; 
+    wire [19:0] next_in;
+    dffr #(6) delay_1(
+        .clk(clk), 
+        .r(reset),
+        .d(next_in), .q(out));
+        
+    assign next_in = step_size;
+    
     // take output of rom and send it into sine_reader along with gen_next_sample
     // does the ternary operator make sense?
     wire new_sample;
-    sine_reader sine_instance (.clk(clk), .reset(reset), .step_size(load_new_note ? step_size : 20'd0), .generate_next(generate_next_sample), .sample_ready(new_sample), .sample(sample_out));
+    // load_new_note ? 
+    sine_reader reader(.clk(clk), .reset(reset), .step_size(step_size), .generate_next(generate_next_sample), .sample_ready(new_sample), .sample(sample_out));
     
     // don't send new sample ready if play enable is low
     assign new_sample_ready = play_enable ? new_sample : 1'b0;
@@ -36,26 +47,26 @@ module note_player(
         .r(reset),
         .d(next), .q(count_duration));
     
-    always @(*) begin
-        if (play_enable == 1'b1) begin
-            if (count_duration == duration_to_load) begin
-                // set note to done
-                check_done = 1'b1;
-                // reset count dur
-                next1 = 5'd0;
-            end
-            else if (beat == 1'b1) begin
-                next1 = count_duration + 1;
-                check_done = 1'b0;
-            end
-            else begin
-                check_done = 1'b0;
-            end
-        end
-    end
-    assign next = reset ? 5'd0 : next1;
+//    always @(*) begin
+//        if (play_enable == 1'b1) begin
+//            if (count_duration == duration_to_load) begin
+//                // set note to done
+//                check_done = 1'b1;
+//                // reset count dur
+//                next1 = 5'd0;
+//            end
+//            else if (beat == 1'b1) begin
+//                next1 = count_duration + 1;
+//                check_done = 1'b0;
+//            end
+//            else begin
+//                check_done = 1'b0;
+//            end
+//        end
+//    end
+//    assign next = reset ? 5'd0 : next1;
     
-    // set note to done
-    assign done_with_note = check_done;
+//    // set note to done
+//    assign done_with_note = check_done;
 
 endmodule
