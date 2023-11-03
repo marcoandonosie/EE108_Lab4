@@ -29,7 +29,14 @@ module song_reader_tb();
 
     // Tests
     initial begin
+        note_address = 5'd0;
+        song = 2'd0;
+        note = 6'd49;
+        duration = 6'd12;
 
+
+$display("Playing note %d of song %d, which is note %d duration %d",
+note_address, song, note, duration);
     end
 
 endmodule
