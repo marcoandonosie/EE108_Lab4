@@ -19,10 +19,12 @@ module note_player(
     frequency_rom rom_instance (.clk(clk), .addr(note_to_load), .dout(step_size)); // is note right address????? size wise
     
     // take output of rom and send it into sine_reader along with gen_next_sample
-    // do the ternary operators make sense?
-    sine_reader sine_instance (.clk(clk), .reset(reset), .step_size(load_new_note ? step_size : 20'd0), .generate_next(generate_next_sample), .sample_ready(play_enable ? new_sample_ready : 1'b0), .sample(sample_out));
+    // does the ternary operator make sense?
+    wire new_sample;
+    sine_reader sine_instance (.clk(clk), .reset(reset), .step_size(load_new_note ? step_size : 20'd0), .generate_next(generate_next_sample), .sample_ready(new_sample), .sample(sample_out));
     
-    // don't send new sample ready if play enable is low?
+    // don't send new sample ready if play enable is low
+    assign new_sample_ready = play_enable ? new_sample : 1'b0;
     
     wire [5:0] count_duration; // this is state var
     wire [5:0] next;
@@ -36,16 +38,18 @@ module note_player(
     
     always @(*) begin
         if (play_enable == 1'b1) begin
-            if (beat == 1'b1) begin
-                next1 = count_duration + 1;
-            end
-            else if (count_duration == duration_to_load) begin
+            if (count_duration == duration_to_load) begin
                 // set note to done
                 check_done = 1'b1;
                 // reset count dur
                 next1 = 5'd0;
             end
+            else if (beat == 1'b1) begin
+                next1 = count_duration + 1;
+                check_done = 1'b0;
+            end
             else begin
+                check_done = 1'b0;
             end
         end
     end
