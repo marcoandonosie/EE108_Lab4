@@ -43,15 +43,54 @@ module note_player_tb();
     initial begin
         #33
         play_enable = 1'b1;
-        generate_next_sample = 1'b0;
-        note_to_load = 6'd1;
-        duration_to_load = 6'd32;
-        load_new_note = 1'b1;
-        #15
+        generate_next_sample = 1'b1;
+        note_to_load = 6'b000001;
+        duration_to_load = 6'd5;
+        #10
         $display(sample_out, new_sample_ready, done_with_note);
         
         
 
     end
+
+//    integer delay;
+//    initial begin
+//        delay = 2000000;
+//        play_enable = 1'b0;
+//        load_new_note = 1'b0;
+//        @(negedge reset);
+//        @(negedge clk);
+
+//        repeat (25) begin
+//            @(negedge clk);
+//        end 
+
+//        // Start playing
+//        $display("Starting playing song 0...");
+//        @(negedge clk);
+//        play_enable = 1'b1;
+//        generate_next_sample = 1'b0;
+//        note_to_load = 6'b000001;
+//        duration_to_load = 6'd5;
+//        load_new_note = 1'b1;
+//        @(negedge clk);
+//        play_enable = 1'b0;
+//        load_new_note = 1'b0;
+
+//        repeat (delay) begin
+//            @(negedge clk);
+//        end
+
+//        // Pause  
+//        $display("Pause...");
+//        @(negedge clk);
+//        play_enable = 1'b1;
+//        @(negedge clk);
+//        play_enable = 1'b0;
+
+//        repeat (delay/4) begin
+//            @(negedge clk);
+//        end
+//    end
 
 endmodule

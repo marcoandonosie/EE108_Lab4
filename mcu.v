@@ -19,7 +19,6 @@ module mcu(
     output [1:0] song,
     input song_done
 );
-
     // Implementation goes here!
     wire [`WIDTH - 1:0] state;
     wire [`WIDTH - 1:0] next;
@@ -36,43 +35,59 @@ module mcu(
         case(state)
             `PAUSE0: next1 = play_button ? `SONG0 : (next_button ? `PAUSE1 : `PAUSE0);
             `SONG0: begin
-                next1 = play_button ? `MASTER_PAUSE : (next_button ? `PAUSE1 : `SONG0);
+                next1 = play_button ? `MASTER_PAUSE : (next_button || song_done ? `PAUSE1 : `SONG0);
                 if (play_button == 1'b1) begin
                     save_song = `SONG0;
                 end
             end  
             `PAUSE1: next1 = play_button ? `SONG1 : (next_button ? `PAUSE2 : `PAUSE1);
             `SONG1: begin
-                next1 = play_button ? `MASTER_PAUSE : (next_button ? `PAUSE2 : `SONG1);
+                next1 = play_button ? `MASTER_PAUSE : (next_button || song_done ? `PAUSE2 : `SONG1);
                 if (play_button == 1'b1) begin
                     save_song = `SONG1;
                 end
             end 
             `PAUSE2: next1 = play_button ? `SONG2 : (next_button ? `PAUSE3 : `PAUSE2);
             `SONG2: begin
-                next1 = play_button ? `MASTER_PAUSE : (next_button ? `PAUSE3 : `SONG2);
+                next1 = play_button ? `MASTER_PAUSE : (next_button || song_done ? `PAUSE3 : `SONG2);
                 if (play_button == 1'b1) begin
                     save_song = `SONG2;
                 end
             end
             `PAUSE3: next1 =  play_button ? `SONG3 : (next_button ? `PAUSE0 : `PAUSE3);
             `SONG3: begin
-                next1 = play_button ? `MASTER_PAUSE : (next_button ? `PAUSE0 : `SONG3);
+                next1 = play_button ? `MASTER_PAUSE : (next_button || song_done ? `PAUSE0 : `SONG3);
                 if (play_button == 1'b1) begin
                     save_song = `SONG3;
                 end
             end
-            `MASTER_PAUSE: next1 = play_button ? save_song : `MASTER_PAUSE;
+            `MASTER_PAUSE: begin
+                if (play_button == 1'b1) begin
+                    next1 = save_song;
+                end
+                else if (next_button == 1'b1) begin
+                    // case where in master pause but skip to next song
+                    case(save_song)
+                        `SONG0: next1 = `PAUSE1;
+                        `SONG1: next1 = `PAUSE2;
+                        `SONG2: next1 = `PAUSE3;
+                        `SONG3: next1 =  `PAUSE0;
+                    endcase
+                end
+                else begin
+                    next1 = `MASTER_PAUSE;
+                end
+            end
             default: next1 = `PAUSE0;
         endcase 
-    end
+    end // song nd play not updating properly
     
     assign next = reset ? `PAUSE0 : next1;
     
     // assign song output
     reg [1:0] song_temp;
     always @(*) begin
-        case(state)
+        case(save_song)
             `SONG0: song_temp = 2'b00;
             `SONG1: song_temp = 2'b01;
             `SONG2: song_temp = 2'b10;
