@@ -19,6 +19,7 @@ module song_reader_tb();
     );
 
     // Clock and reset
+    
     initial begin
         clk = 1'b0;
         reset = 1'b1;
@@ -29,7 +30,20 @@ module song_reader_tb();
 
     // Tests
     initial begin
-
+        #33
+        play_button = 1'b1;
+        #12
+        play_button = 1'b0;
+        #12
+        $display(play, ", expected 0");
+        $display(song, ", expected 0");
+    initial begin
+        #10 //are these delay values meaningful?
+        note_address = 
+        song = 2'b0;
+        address = 5'b0;
+        $display("Playing note %d of song %d, which is note %d duration %d",
+note_address, song, note, duration);
     end
 
 endmodule
