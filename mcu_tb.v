@@ -25,50 +25,58 @@ module mcu_tb();
 
     // Tests
     initial begin
-        #33
+        #33 
+        //testing the pause button 
         play_button = 1'b1;
         #12
         play_button = 1'b0;
         #12
         $display(play, ", expected 0");
         $display(song, ", expected 0");
-        
-        next_button = 1'b1;
+
+        //testing moving to the second song and then playing
+        next_button = 1'b1; 
         #12
         next_button = 1'b0;
         play_button = 1'b1;
         #12
         $display(play, ", expected 1");
         $display(song, ", expected 1");
-        
+
+        //testing pause, then skipping the song and playing the next one
         play_button = 1'b0;
         next_button = 1'b1;
         #12
+        next_button = 1'b0;
         play_button = 1'b1;
         #12
         $display(play, ", expected 1");
         $display(song, ", expected 2");
+
         
         play_button = 1'b0;
-        next_button = 1'b1;
+        next_button = 1'b1; 
         #12
+        next_button = 1'b0;
         play_button = 1'b1;
         #12
         $display(play, ", expected 1");
-        $display(song, ", expected 3");
-        
-        play_button = 1'b0;
+        $display(song, ", expected 3"); //expecting to skip ahead by a song
+   
+        play_button = 1'b0; //testing to see if it pauses on song 3
         #12
         $display(play, ", expected 0");
         $display(song, ", expected 3");
-//        play_button = 1'b1;
-//        // song_done = 1'b0;
-//        #15
-//        $display(play, ", expected 1");
-//        play_button = 1'b0;
-//        #15
-//        $display(song, ", expected 0");
-//        $display(play, ", expected 0");
+
+        //testing the song_done input to skip ahead a song when a song ends 
+        play_button = 1'b1;
+        song_done = 1'b0;
+        #15
+        $display(play, ", expected 1");
+        play_button = 1'b0;
+        #15
+        $display(song, ", expected 0");
+        $display(play, ", expected 0");
         
 
 //        next_button = 1'b1;
