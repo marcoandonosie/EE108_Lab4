@@ -30,9 +30,10 @@ module song_reader_tb();
     // Tests
     initial begin
         #33
-    
         song = 2'd0;
+        note_done = 1'd1;
         #10
+        note_done = 1'd0;
         $display ("Playing a note of song %d, which is note %d duration %d", song, note, duration);
         
         #10
