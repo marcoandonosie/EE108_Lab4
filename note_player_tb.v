@@ -42,16 +42,31 @@ module note_player_tb();
     // Tests
     initial begin
         #33
-        play_enable = 1'b1;
+        play_enable = 1'b1; //testing generic working case;
         generate_next_sample = 1'b0;
         note_to_load = 6'd1;
         duration_to_load = 6'd32;
         load_new_note = 1'b1;
         #15
         $display(sample_out, new_sample_ready, done_with_note);
-        
-        
 
+        
+        play_enable = 1'b0 //testing to see if outputs update when we pause;
+        generate_next_sample = 1'b0;
+        note_to_load = 6'd1;
+        duration_to_load = 6'd32;
+        load_new_note = 1'b1;
+        #15
+        $display(sample_out, new_sample_ready, done_with_note);
+
+        play_enable = 1'b1 // regular test case, on a shorter duration_to_load
+        generate_next_sample = 1'b1;
+        note_to_load = 6'd1;
+        duration_to_load = 6'd10;
+        load_new_note = 1'b1;
+        #15
+        
+        $display(sample_out, new_sample_ready, done_with_note);
     end
 
 endmodule
